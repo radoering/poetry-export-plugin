@@ -500,12 +500,7 @@ created-by = "poetry-plugin-export"
 [[packages]]
 name = "demo"
 version = "0.1.0"
-
-[packages.archive]
-path = "{(poetry.locker.lock.parent / "distributions" / "demo-0.2.0-py3-none-any.whl").as_posix()}"
-
-[packages.archive.hashes]
-sha256 = "abcdef1234567890"
+archive = {{path = "C:/dev/ttp/poetry-export-plugin/tests/fixtures/distributions/demo-0.2.0-py3-none-any.whl", hashes = {{sha256 = "abcdef1234567890"}}}}
 
 [[packages]]
 name = "simple-project"
@@ -517,13 +512,7 @@ editable = true
 [[packages]]
 name = "tmp-project"
 version = "3"
-
-[packages.archive]
-path = "files/tmp_project.zip"
-subdirectory = "sub"
-
-[packages.archive.hashes]
-sha256 = "fedcba0987654321"
+archive = {{path = "files/tmp_project.zip", hashes = {{sha256 = "fedcba0987654321"}}, subdirectory = "sub"}}
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -590,23 +579,12 @@ created-by = "poetry-plugin-export"
 [[packages]]
 name = "foo"
 version = "1.0"
-
-[packages.archive]
-url = "https://example.org/foo-1.0-py3-none-any.whl"
-
-[packages.archive.hashes]
-sha256 = "abcdef1234567890"
+archive = {url = "https://example.org/foo-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}}
 
 [[packages]]
 name = "bar"
 version = "3"
-
-[packages.archive]
-url = "https://example.org/bar.zip#subdir=sub"
-subdirectory = "sub"
-
-[packages.archive.hashes]
-sha256 = "fedcba0987654321"
+archive = {url = "https://example.org/bar.zip#subdir=sub", hashes = {sha256 = "fedcba0987654321"}, subdirectory = "sub"}
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -656,20 +634,10 @@ created-by = "poetry-plugin-export"
 name = "foo"
 version = "1.0"
 index = "https://pypi.org/simple"
-
-[[packages.wheels]]
-name = "foo-1.0-py3-none-any.whl"
-url = "https://example.org/foo-1.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567890"
-
-[packages.sdist]
-name = "foo-1.0.tar.gz"
-url = "https://example.org/foo-1.0.tar.gz"
-
-[packages.sdist.hashes]
-sha256 = "0123456789abcdef"
+sdist = {name = "foo-1.0.tar.gz", url = "https://example.org/foo-1.0.tar.gz", hashes = {sha256 = "0123456789abcdef"}}
+wheels = [
+    {name = "foo-1.0-py3-none-any.whl", url = "https://example.org/foo-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}},
+]
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -723,13 +691,7 @@ created-by = "poetry-plugin-export"
 name = "foo"
 version = "1.0"
 index = "https://pypi.org/simple"
-
-[packages.sdist]
-name = "foo-1.0.tar.gz"
-url = "https://example.org/foo-1.0.tar.gz"
-
-[packages.sdist.hashes]
-sha256 = "0123456789abcdef"
+sdist = {name = "foo-1.0.tar.gz", url = "https://example.org/foo-1.0.tar.gz", hashes = {sha256 = "0123456789abcdef"}}
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -783,13 +745,9 @@ created-by = "poetry-plugin-export"
 name = "foo"
 version = "1.0"
 index = "https://pypi.org/simple"
-
-[[packages.wheels]]
-name = "foo-1.0-py3-none-any.whl"
-url = "https://example.org/foo-1.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567890"
+wheels = [
+    {name = "foo-1.0-py3-none-any.whl", url = "https://example.org/foo-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}},
+]
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -854,20 +812,10 @@ created-by = "poetry-plugin-export"
 name = "foo"
 version = "1.0"
 index = "https://pypi.org/simple"
-
-[[packages.wheels]]
-name = "foo-1.0-py2-none-any.whl"
-url = "https://example.org/foo-1.0-py2-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567891"
-
-[[packages.wheels]]
-name = "foo-1.0-py3-none-any.whl"
-url = "https://example.org/foo-1.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567890"
+wheels = [
+    {name = "foo-1.0-py2-none-any.whl", url = "https://example.org/foo-1.0-py2-none-any.whl", hashes = {sha256 = "abcdef1234567891"}},
+    {name = "foo-1.0-py3-none-any.whl", url = "https://example.org/foo-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}},
+]
 
 [tool.poetry-plugin-export]
 groups = ["main"]
@@ -944,39 +892,19 @@ created-by = "poetry-plugin-export"
 name = "foo"
 version = "1.0"
 index = "https://legacy1.org/simple"
-
-[[packages.wheels]]
-name = "foo-1.0-py3-none-any.whl"
-url = "https://legacy1.org/foo-1.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567890"
-
-[packages.sdist]
-name = "foo-1.0.tar.gz"
-url = "https://legacy1.org/foo-1.0.tar.gz"
-
-[packages.sdist.hashes]
-sha256 = "0123456789abcdef"
+sdist = {name = "foo-1.0.tar.gz", url = "https://legacy1.org/foo-1.0.tar.gz", hashes = {sha256 = "0123456789abcdef"}}
+wheels = [
+    {name = "foo-1.0-py3-none-any.whl", url = "https://legacy1.org/foo-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}},
+]
 
 [[packages]]
 name = "bar"
 version = "1.0"
 index = "https://legacy2.org/simple"
-
-[[packages.wheels]]
-name = "bar-1.0-py3-none-any.whl"
-url = "https://legacy2.org/bar-1.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "abcdef1234567890"
-
-[packages.sdist]
-name = "bar-1.0.tar.gz"
-url = "https://legacy2.org/bar-1.0.tar.gz"
-
-[packages.sdist.hashes]
-sha256 = "0123456789abcdef"
+sdist = {name = "bar-1.0.tar.gz", url = "https://legacy2.org/bar-1.0.tar.gz", hashes = {sha256 = "0123456789abcdef"}}
+wheels = [
+    {name = "bar-1.0-py3-none-any.whl", url = "https://legacy2.org/bar-1.0-py3-none-any.whl", hashes = {sha256 = "abcdef1234567890"}},
+]
 
 [tool.poetry-plugin-export]
 groups = ["main"]

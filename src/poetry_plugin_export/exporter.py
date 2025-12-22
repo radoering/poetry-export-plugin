@@ -252,7 +252,11 @@ class Exporter:
         return metadata.version("poetry")
 
     def _export_pylock_toml(self, out_dir: Path) -> str:
+        from tomlkit import aot
+        from tomlkit import array
         from tomlkit import document
+        from tomlkit import inline_table
+        from tomlkit import table
 
         min_poetry_version = "2.3.0"
         if Version.parse(self._get_poetry_version()) < Version.parse(
@@ -280,7 +284,7 @@ class Exporter:
             lock["requires-python"] = str(python_constraint)
         lock["created-by"] = "poetry-plugin-export"
 
-        packages = []
+        packages = aot()
         for dependency_package in get_project_dependency_packages2(
             self._poetry.locker,
             groups=set(self._groups),
@@ -288,10 +292,9 @@ class Exporter:
         ):
             dependency = dependency_package.dependency
             package = dependency_package.package
-            data: dict[str, Any] = {
-                "name": package.name,
-                "version": str(package.version),
-            }
+            data = table()
+            data["name"] = package.name
+            data["version"] = str(package.version)
             if not package.marker.is_any():
                 data["marker"] = str(package.marker)
             if not package.python_constraint.is_any():
@@ -325,7 +328,7 @@ class Exporter:
                         dir_["editable"] = package.develop
                     data["directory"] = dir_
                 case FileDependency():
-                    archive: dict[str, Any] = {}
+                    archive = inline_table()
                     try:
                         archive["path"] = dependency.full_path.relative_to(
                             out_dir
@@ -340,7 +343,7 @@ class Exporter:
                         archive["subdirectory"] = dependency.directory
                     data["archive"] = archive
                 case URLDependency():
-                    archive = {}
+                    archive = inline_table()
                     archive["url"] = dependency.url
                     assert len(package.files) == 1, (
                         "URLDependency must have exactly one file"
@@ -368,22 +371,22 @@ class Exporter:
                     }
                     sdist_files = list(artifacts.get("sdist", []))
                     for sdist in sdist_files:
-                        data["sdist"] = {
-                            "name": sdist["file"],
-                            "url": sdist["url"],
-                            "hashes": dict([sdist["hash"].split(":", 1)]),
-                        }
+                        data["sdist"] = inline_table()
+                        data["sdist"]["name"] = sdist["file"]  # type: ignore[index]
+                        data["sdist"]["url"] = sdist["url"]  # type: ignore[index]
+                        data["sdist"]["hashes"] = dict([sdist["hash"].split(":", 1)])  # type: ignore[index]
                     if wheels := list(artifacts.get("wheel", [])):
-                        data["wheels"] = [
-                            {
-                                "name": wheel["file"],
-                                "url": wheel["url"],
-                                "hashes": dict([wheel["hash"].split(":", 1)]),
-                            }
-                            for wheel in wheels
-                        ]
+                        wa = array()
+                        data["wheels"] = wa
+                        wa.multiline(True)
+                        for wheel in wheels:
+                            wt = inline_table()
+                            wt["name"] = wheel["file"]
+                            wt["url"] = wheel["url"]
+                            wt["hashes"] = dict([wheel["hash"].split(":", 1)])
+                            wa.append(wt)
 
-        lock["packages"] = packages
+        lock["packages"] = packages if packages else []
 
         lock["tool"] = {}
         lock["tool"]["poetry-plugin-export"] = {}  # type: ignore[index]
@@ -396,8 +399,9 @@ class Exporter:
         # Though Poetry could parse it, other tools would fail.
         # Since requires-python is redundant with markers, we just comment it out.
         lock_lines = [
-            f"# {line}" if line.startswith("requires-python = ") and "||" in line else line
-            for line in
-            lock.as_string().splitlines()
+            f"# {line}"
+            if line.startswith("requires-python = ") and "||" in line
+            else line
+            for line in lock.as_string().splitlines()
         ]
         return "\n".join(lock_lines) + "\n"
