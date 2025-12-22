@@ -9,6 +9,7 @@ import pytest
 
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.package import Package
+from poetry.repositories import Repository
 
 from poetry_plugin_export.exporter import Exporter
 from tests.markers import MARKER_PY
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from cleo.testers.command_tester import CommandTester
     from poetry.poetry import Poetry
-    from poetry.repositories import Repository
     from pytest_mock import MockerFixture
 
     from tests.types import CommandTesterFactory
@@ -322,4 +322,60 @@ develop = true }}
     expected = 'baz==2.0.0 ; python_version >= "3.6" and python_version < "4.0"\n'
 
     assert develop_warning in tester.io.fetch_error()
+    assert tester.io.fetch_output() == expected
+
+
+def test_export_pylock_toml(
+    mocker: MockerFixture, poetry: Poetry, tester: CommandTester, do_lock: None
+) -> None:
+    mocker.patch(
+        "poetry_plugin_export.exporter.Exporter._get_poetry_version",
+        return_value="2.3.0",
+    )
+    poetry.package.python_versions = "*"
+    repo = Repository("PyPI")
+    poetry.pool.add_repository(repo)
+    foo = Package("foo", "1.0")
+    foo.files = [
+        {
+            "file": "foo-1.0-py3-none-any.whl",
+            "hash": "sha256:abcdef1234567890",
+            "url": "https://example.org/foo-1.0-py3-none-any.whl",
+        },
+        {
+            "file": "foo-1.0.tar.gz",
+            "hash": "sha256:0123456789abcdef",
+            "url": "https://example.org/foo-1.0.tar.gz",
+        },
+    ]
+    repo.add_package(foo)
+
+    tester.execute("--format pylock.toml")
+    expected = """\
+lock-version = "1.0"
+created-by = "poetry-plugin-export"
+
+[[packages]]
+name = "foo"
+version = "1.0.0"
+index = "https://pypi.org/simple"
+
+[[packages.wheels]]
+name = "foo-1.0-py3-none-any.whl"
+url = "https://example.org/foo-1.0-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "abcdef1234567890"
+
+[packages.sdist]
+name = "foo-1.0.tar.gz"
+url = "https://example.org/foo-1.0.tar.gz"
+
+[packages.sdist.hashes]
+sha256 = "0123456789abcdef"
+
+[tool.poetry-plugin-export]
+groups = ["main"]
+extras = []
+"""
     assert tester.io.fetch_output() == expected

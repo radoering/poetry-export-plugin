@@ -276,6 +276,8 @@ def get_project_dependency_packages2(
         if not marker.validate({"extra": extras}):
             continue
 
+        marker = marker.without_extras()
+
         if project_python_marker:
             marker = project_python_marker.intersect(marker)
 
