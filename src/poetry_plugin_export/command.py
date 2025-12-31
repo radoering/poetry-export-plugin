@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -87,6 +88,17 @@ class ExportCommand(GroupCommand):
             raise ValueError(f"Invalid export format: {fmt}")
 
         output = self.option("output")
+
+        pylock_pattern = r"^pylock\.([^.]+)\.toml$"
+        if fmt == Exporter.FORMAT_PYLOCK_TOML and output and not re.match(output,pylock_pattern):
+            self.line_error(
+                "<error>"
+                'The output file for pylock.toml export must be named "pylock.toml"'
+                ' or must following the regex r"^pylock\.([^.]+)\.toml$",'
+                ' e.g. "pylock.dev.toml"'
+                "</error>"
+            )
+            return 1
 
         locker = self.poetry.locker
         if not locker.is_locked():

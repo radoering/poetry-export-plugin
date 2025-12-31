@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import urllib.parse
 
+from datetime import datetime
 from functools import partialmethod
 from importlib import metadata
 from typing import TYPE_CHECKING
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
     from typing import ClassVar
 
     from packaging.utils import NormalizedName
+    from poetry.core.packages.package import PackageFile
     from poetry.poetry import Poetry
 
 
@@ -272,6 +274,24 @@ class Exporter:
                 "Cannot export pylock.toml because the lock file is not at least version 2.1"
             )
 
+        def add_file_info(
+            archive: dict[str, Any], locked_file_info: PackageFile, additional_file_info: PackageFile, *, full: bool = False
+        ) -> None:
+            if full:
+                archive["name"] = locked_file_info["file"]
+                archive["url"] = additional_file_info["url"]
+            if upload_time := additional_file_info.get("upload_time"):
+                try:
+                    # Python < 3.11 does not support 'Z' suffix for UTC, replace it with '+00:00'
+                    archive["upload-time"] = datetime.fromisoformat(
+                        upload_time.replace("Z", "+00:00")
+                    )
+                except ValueError:
+                    pass
+            if size := additional_file_info.get("size"):
+                archive["size"] = size
+            archive["hashes"] = dict([locked_file_info["hash"].split(":", 1)])
+
         python_constraint = self._poetry.package.python_constraint
         python_marker = parse_marker(
             create_nested_marker("python_version", python_constraint)
@@ -338,7 +358,7 @@ class Exporter:
                     assert len(package.files) == 1, (
                         "FileDependency must have exactly one file"
                     )
-                    archive["hashes"] = dict([package.files[0]["hash"].split(":", 1)])
+                    add_file_info(archive, package.files[0], {})
                     if dependency.directory:
                         archive["subdirectory"] = dependency.directory
                     data["archive"] = archive
@@ -348,20 +368,24 @@ class Exporter:
                     assert len(package.files) == 1, (
                         "URLDependency must have exactly one file"
                     )
-                    archive["hashes"] = dict([package.files[0]["hash"].split(":", 1)])
+                    add_file_info(archive, package.files[0], {})
                     if dependency.directory:
                         archive["subdirectory"] = dependency.directory
                     data["archive"] = archive
                 case _:
                     data["index"] = package.source_url or "https://pypi.org/simple"
+                    pool_info = {
+                        p["file"]: p
+                        for p in self._poetry.pool.package(
+                            package.name,
+                            package.version,
+                            package.source_reference or "PyPI",
+                        ).files
+                    }
                     artifacts = {
                         k: list(v)
                         for k, v in itertools.groupby(
-                            self._poetry.pool.package(
-                                package.name,
-                                package.version,
-                                package.source_reference or "PyPI",
-                            ).files,
+                            package.files,
                             key=(
                                 lambda x: "wheel"
                                 if x["file"].endswith(".whl")
@@ -372,18 +396,14 @@ class Exporter:
                     sdist_files = list(artifacts.get("sdist", []))
                     for sdist in sdist_files:
                         data["sdist"] = inline_table()
-                        data["sdist"]["name"] = sdist["file"]  # type: ignore[index]
-                        data["sdist"]["url"] = sdist["url"]  # type: ignore[index]
-                        data["sdist"]["hashes"] = dict([sdist["hash"].split(":", 1)])  # type: ignore[index]
+                        add_file_info(data["sdist"], sdist, pool_info[sdist["file"]], full=True)
                     if wheels := list(artifacts.get("wheel", [])):
                         wa = array()
                         data["wheels"] = wa
                         wa.multiline(True)
                         for wheel in wheels:
                             wt = inline_table()
-                            wt["name"] = wheel["file"]
-                            wt["url"] = wheel["url"]
-                            wt["hashes"] = dict([wheel["hash"].split(":", 1)])
+                            add_file_info(wt, wheel, pool_info[wheel["file"]], full=True)
                             wa.append(wt)
 
         lock["packages"] = packages if packages else []

@@ -64,6 +64,8 @@ def pypi_repo() -> Repository:
             "file": "foo-1.0-py3-none-any.whl",
             "hash": "sha256:abcdef1234567890",
             "url": "https://example.org/foo-1.0-py3-none-any.whl",
+            "upload_time": "2025-12-28T12:34:56.789Z",
+            "size": 12345,
         },
         {
             "file": "foo-1.0.tar.gz",
@@ -99,6 +101,8 @@ def legacy_repositories() -> list[Repository]:
                     "file": f"{package_name}-1.0.tar.gz",
                     "hash": "sha256:0123456789abcdef",
                     "url": f"https://{repo_name}.org/{package_name}-1.0.tar.gz",
+                    "upload_time": "2025-12-27T12:34:56.789Z",
+                    "size": 42,
                 },
             ]
             repo.add_package(package)
